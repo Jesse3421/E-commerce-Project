@@ -3,18 +3,19 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 
 // The `/api/products` endpoint
 
-// get all products
+// GET all products
 router.get('/', (req, res) => {
   Product.findAll({
     attributes: ['id', 'product_name', 'price', 'stock', 'category_id'],
     include: [
       {
-        model: Tag,
-        attributes: ['tag_name', 'id']
+        model: Category,
+        attributes: ['id', 'category_name']
       },
       {
-        model: Category,
-        attributes: ['category_name']
+        model: Tag,
+        through: ProductTag,
+        as: 'tags'
       }
     ]
   })
@@ -25,22 +26,23 @@ router.get('/', (req, res) => {
   });
 });
 
-// get one product
+// GET one product by ID
 router.get('/:id', (req, res) => {
   Product.findOne({
     where: {
       id: req.params.id
     },
-    attributes: ['id', 'product_name', 'price', 'stock', 'category_id'],
+    //attributes: ['id', 'product_name', 'price', 'stock', 'category_id'],
     include: [
       {
-        model: Tag,
-        attributes: ['tag_name', 'id']
+        model: Category,
+        attributes: ['id', 'category_name']
       },
       {
-        model: Category,
-        attributes: ['category_name']
-      }
+        model: Tag,
+        through: ProductTag,
+        as: 'tags'
+      },
     ]
   })
   .then(dbProductData => {
@@ -56,13 +58,13 @@ router.get('/:id', (req, res) => {
   });
 });
 
-// create new product
+// CREATE/POST new product
 router.post('/', (req, res) => {
   Product.create({
       product_name: req.body.product_name,
       price: req.body.price,
       stock: req.body.stock,
-      tagIds: req.body.tagIds
+      tagIds: req.body.tag_Id
     })
     .then((product) => {
       // if there's product tags, we need to create pairings to bulk create in the ProductTag model
@@ -85,7 +87,7 @@ router.post('/', (req, res) => {
     });
 });
 
-// update product
+// UPDATE/PUT product
 router.put('/:id', (req, res) => {
   Product.update(req.body, {
     where: {
@@ -126,6 +128,7 @@ router.put('/:id', (req, res) => {
     });
 });
 
+//DELETE Product
 router.delete('/:id', (req, res) => {
   Product.destroy({
     where: {
